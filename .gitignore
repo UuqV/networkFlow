@@ -6,6 +6,8 @@
 [Ll]ogs/
 [Mm]emoryCaptures/
 
+*Build*
+
 # User-specific
 *.csproj
 *.unityproj
@@ -14,6 +16,7 @@
 *.pidb
 *.booproj
 *.svd
+*.dll
 
 # Unity Cloud files
 .projectsettings.asset
