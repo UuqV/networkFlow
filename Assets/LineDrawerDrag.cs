@@ -1,18 +1,16 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using System.Collections.Generic;
+using UnityEngine.Tilemaps;
 
 public class DragToDraw : MonoBehaviour
 {
     public GameObject linePrefab;
-    public float snapDistance = 0.3f;
+    public Tilemap tilemap; // assign your Tilemap here in Inspector
 
     private InputSystem_Actions input;
     private Camera cam;
     private LineRenderer currentLine;
     private bool isDrawing = false;
-
-    private List<LineRenderer> allLines = new List<LineRenderer>();
 
     private void Awake()
     {
@@ -39,7 +37,7 @@ public class DragToDraw : MonoBehaviour
             Vector2 screenPos = Mouse.current.position.ReadValue();
             Vector3 worldPos = cam.ScreenToWorldPoint(screenPos);
             worldPos.z = 0;
-            currentLine.SetPosition(1, SnapToNearbyPoint(worldPos));
+            currentLine.SetPosition(1, SnapToTilemapGrid(worldPos));
         }
     }
 
@@ -51,37 +49,27 @@ public class DragToDraw : MonoBehaviour
 
         if (!isDrawing)
         {
-            Vector3 snappedStart = SnapToNearbyPoint(worldPos);
+            Vector3 snappedStart = SnapToTilemapGrid(worldPos);
             GameObject newLine = Instantiate(linePrefab);
             currentLine = newLine.GetComponent<LineRenderer>();
             currentLine.positionCount = 2;
             currentLine.SetPosition(0, snappedStart);
             currentLine.SetPosition(1, snappedStart);
-            allLines.Add(currentLine);
             isDrawing = true;
         }
         else
         {
-            Vector3 snappedEnd = SnapToNearbyPoint(worldPos);
+            Vector3 snappedEnd = SnapToTilemapGrid(worldPos);
             currentLine.SetPosition(1, snappedEnd);
             isDrawing = false;
             currentLine = null;
         }
     }
 
-    private Vector3 SnapToNearbyPoint(Vector3 point)
+    private Vector3 SnapToTilemapGrid(Vector3 worldPos)
     {
-        foreach (var line in allLines)
-        {
-            Vector3 start = line.GetPosition(0);
-            Vector3 end = line.GetPosition(1);
-
-            if (Vector3.Distance(point, start) <= snapDistance)
-                return start;
-
-            if (Vector3.Distance(point, end) <= snapDistance)
-                return end;
-        }
-        return point;
+        Vector3Int cellPos = tilemap.WorldToCell(worldPos);
+        Vector3 snappedWorldPos = tilemap.GetCellCenterWorld(cellPos);
+        return snappedWorldPos;
     }
 }
