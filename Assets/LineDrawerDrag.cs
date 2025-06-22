@@ -5,13 +5,14 @@ using UnityEngine.Tilemaps;
 public class DragToDraw : MonoBehaviour
 {
     public GameObject linePrefab;
-    public Tilemap tilemap; // assign your Tilemap here in Inspector
+    public Tilemap tilemap; // optional snapping
 
     private InputSystem_Actions input;
     private Camera cam;
     private LineRenderer currentLine;
     private bool isDrawing = false;
 
+    private LineGraph graph = new LineGraph();
     private void Awake()
     {
         input = new InputSystem_Actions();
@@ -40,7 +41,6 @@ public class DragToDraw : MonoBehaviour
             currentLine.SetPosition(1, SnapToTilemapGrid(worldPos));
         }
     }
-
     private void OnClickPerformed(InputAction.CallbackContext ctx)
     {
         Vector2 screenPos = Mouse.current.position.ReadValue();
@@ -49,7 +49,7 @@ public class DragToDraw : MonoBehaviour
 
         if (!isDrawing)
         {
-            Vector3 snappedStart = SnapToTilemapGrid(worldPos);
+            Vector3 snappedStart = tilemap != null ? SnapToTilemapGrid(worldPos) : worldPos;
             GameObject newLine = Instantiate(linePrefab);
             currentLine = newLine.GetComponent<LineRenderer>();
             currentLine.positionCount = 2;
@@ -59,8 +59,12 @@ public class DragToDraw : MonoBehaviour
         }
         else
         {
-            Vector3 snappedEnd = SnapToTilemapGrid(worldPos);
+            Vector3 snappedEnd = tilemap != null ? SnapToTilemapGrid(worldPos) : worldPos;
             currentLine.SetPosition(1, snappedEnd);
+
+            // Add to graph
+            graph.AddEdge(currentLine.GetPosition(0), snappedEnd);
+
             isDrawing = false;
             currentLine = null;
         }
@@ -69,7 +73,6 @@ public class DragToDraw : MonoBehaviour
     private Vector3 SnapToTilemapGrid(Vector3 worldPos)
     {
         Vector3Int cellPos = tilemap.WorldToCell(worldPos);
-        Vector3 snappedWorldPos = tilemap.GetCellCenterWorld(cellPos);
-        return snappedWorldPos;
+        return tilemap.GetCellCenterWorld(cellPos);
     }
 }
