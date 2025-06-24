@@ -4,8 +4,12 @@ using UnityEngine.InputSystem;
 public class Draw : MonoBehaviour
 {
     public LineDrawer lineDrawer;
+    public GameObject dotPrefab;
+    public DrawModeSelector drawModeSelector;
+
     private InputSystem_Actions input;
     private Camera cam;
+
     private void Awake()
     {
         input = new InputSystem_Actions();
@@ -26,17 +30,29 @@ public class Draw : MonoBehaviour
 
     private void Update()
     {
-        Vector2 screenPos = Mouse.current.position.ReadValue();
-        Vector3 worldPos = cam.ScreenToWorldPoint(screenPos);
-        lineDrawer.PositionUpdate(worldPos);
+        if (drawModeSelector.CurrentMode == DrawMode.Line)
+        {
+            Vector2 screenPos = Mouse.current.position.ReadValue();
+            Vector3 worldPos = cam.ScreenToWorldPoint(screenPos);
+            lineDrawer.PositionUpdate(worldPos);
+        }
     }
+
     private void OnClickPerformed(InputAction.CallbackContext ctx)
     {
         Vector2 screenPos = Mouse.current.position.ReadValue();
         Vector3 worldPos = cam.ScreenToWorldPoint(screenPos);
         worldPos.z = 0;
 
-        lineDrawer.DrawLine(worldPos);
-    }
+        switch (drawModeSelector.CurrentMode)
+        {
+            case DrawMode.Line:
+                lineDrawer.DrawLine(worldPos);
+                break;
 
+            case DrawMode.Dot:
+                lineDrawer.DrawDot(worldPos, dotPrefab);
+                break;
+        }
+    }
 }

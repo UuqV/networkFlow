@@ -42,7 +42,13 @@ public class LineDrawer : MonoBehaviour
         }
     }
 
-    private Vector3 SnapToTilemapGrid(Vector3 worldPos)
+    public void DrawDot(Vector3 worldPos, GameObject dotPrefab)
+    {
+        Vector3 snapped = SnapToTilemapGrid(worldPos); // public helper
+        Instantiate(dotPrefab, snapped, Quaternion.identity);
+    }
+
+    public Vector3 SnapToTilemapGrid(Vector3 worldPos)
     {
         Vector3Int cellPos = tilemap.WorldToCell(worldPos);
         return tilemap.GetCellCenterWorld(cellPos);
