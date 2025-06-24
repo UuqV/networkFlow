@@ -1,8 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Tilemaps;
 
-public class DragToDraw : MonoBehaviour
+public class Draw : MonoBehaviour
 {
     public LineDrawer lineDrawer;
     private InputSystem_Actions input;
