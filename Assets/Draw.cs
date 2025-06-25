@@ -47,10 +47,10 @@ public class Draw : MonoBehaviour
                     break;
 
                 case DrawMode.Source:
-                    lineDrawer.DrawDot(worldPos, dotPrefab, Color.red);
+                    lineDrawer.DrawDot(worldPos, dotPrefab, DrawMode.Source);
                     break;
                 case DrawMode.Sink:
-                    lineDrawer.DrawDot(worldPos, dotPrefab, Color.blue);
+                    lineDrawer.DrawDot(worldPos, dotPrefab, DrawMode.Sink);
                     break;
             }
         }

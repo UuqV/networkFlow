@@ -42,7 +42,7 @@ public class LineDrawer : MonoBehaviour
         }
     }
 
-    public void DrawDot(Vector3 worldPos, GameObject dotPrefab, Color color)
+    public void DrawDot(Vector3 worldPos, GameObject dotPrefab, DrawMode mode)
     {
         Vector3 snapped = SnapToTilemapGrid(worldPos); // public helper
         GameObject dot = Instantiate(dotPrefab, snapped, Quaternion.identity);
@@ -51,7 +51,17 @@ public class LineDrawer : MonoBehaviour
         SpriteRenderer sr = dot.GetComponent<SpriteRenderer>();
         if (sr != null)
         {
-            sr.color = color;
+            if (mode == DrawMode.Source)
+            {
+                graph.AddNode(snapped, 1);
+                sr.color = Color.red;
+            }
+            else if (mode == DrawMode.Sink)
+            {
+                graph.AddNode(snapped, -1);
+                sr.color = Color.blue;
+
+            }
         }
     }
 
