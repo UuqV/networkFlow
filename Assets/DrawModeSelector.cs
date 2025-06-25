@@ -4,7 +4,8 @@ using TMPro;
 public enum DrawMode
 {
     Line,
-    Dot
+    Source,
+    Sink
 }
 
 public class DrawModeSelector : MonoBehaviour

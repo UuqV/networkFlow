@@ -42,10 +42,17 @@ public class LineDrawer : MonoBehaviour
         }
     }
 
-    public void DrawDot(Vector3 worldPos, GameObject dotPrefab)
+    public void DrawDot(Vector3 worldPos, GameObject dotPrefab, Color color)
     {
         Vector3 snapped = SnapToTilemapGrid(worldPos); // public helper
-        Instantiate(dotPrefab, snapped, Quaternion.identity);
+        GameObject dot = Instantiate(dotPrefab, snapped, Quaternion.identity);
+
+
+        SpriteRenderer sr = dot.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.color = color;
+        }
     }
 
     public Vector3 SnapToTilemapGrid(Vector3 worldPos)
