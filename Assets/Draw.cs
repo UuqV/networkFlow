@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 
 public class Draw : MonoBehaviour
 {
@@ -19,43 +20,40 @@ public class Draw : MonoBehaviour
     private void OnEnable()
     {
         input.UI.Enable();
-        input.UI.Click.performed += OnClickPerformed;
     }
 
     private void OnDisable()
     {
-        input.UI.Click.performed -= OnClickPerformed;
         input.UI.Disable();
     }
 
     private void Update()
     {
-        if (drawModeSelector.CurrentMode == DrawMode.Line)
+        if (Mouse.current.leftButton.wasPressedThisFrame)
         {
+
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(-1))
+                return;
+
             Vector2 screenPos = Mouse.current.position.ReadValue();
             Vector3 worldPos = cam.ScreenToWorldPoint(screenPos);
-            lineDrawer.PositionUpdate(worldPos);
+            worldPos.z = 0;
+
+            switch (drawModeSelector.CurrentMode)
+            {
+                case DrawMode.Line:
+                    lineDrawer.PositionUpdate(worldPos);
+                    lineDrawer.DrawLine(worldPos);
+                    break;
+
+                case DrawMode.Source:
+                    lineDrawer.DrawDot(worldPos, dotPrefab, Color.red);
+                    break;
+                case DrawMode.Sink:
+                    lineDrawer.DrawDot(worldPos, dotPrefab, Color.blue);
+                    break;
+            }
         }
     }
 
-    private void OnClickPerformed(InputAction.CallbackContext ctx)
-    {
-        Vector2 screenPos = Mouse.current.position.ReadValue();
-        Vector3 worldPos = cam.ScreenToWorldPoint(screenPos);
-        worldPos.z = 0;
-
-        switch (drawModeSelector.CurrentMode)
-        {
-            case DrawMode.Line:
-                lineDrawer.DrawLine(worldPos);
-                break;
-
-            case DrawMode.Source:
-                lineDrawer.DrawDot(worldPos, dotPrefab, Color.red);
-                break;
-            case DrawMode.Sink:
-                lineDrawer.DrawDot(worldPos, dotPrefab, Color.blue);
-                break;
-        }
-    }
 }
