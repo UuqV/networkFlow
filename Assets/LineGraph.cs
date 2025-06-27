@@ -50,39 +50,47 @@ public class LineGraph
     public Dictionary<(Vector3 from, Vector3 to), int> GetFlowEdges()
     {
         int n = nodes.Count;
-        int[,] residual = (int[,])adjacencyMatrix.Clone();
-        int[,] flow = new int[n, n]; // flow[u, v]
+        int virtualSource = n;
+        int virtualSink = n + 1;
 
-        // Find source and sink
-        int source = -1, sink = -1;
+        int totalNodes = n + 2;
+        int[,] residual = new int[totalNodes, totalNodes];
+        int[,] flow = new int[totalNodes, totalNodes];
+
+        // Copy original capacities
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                residual[i, j] = adjacencyMatrix[i, j];
+
+        // Connect virtual source to all real sources
         for (int i = 0; i < n; i++)
         {
-            if (nodeWeights.TryGetValue(i, out int w))
+            if (nodeWeights.TryGetValue(i, out int weight) && weight == 1)
             {
-                if (w == 1) source = i;
-                else if (w == -1) sink = i;
+                residual[virtualSource, i] = int.MaxValue;
             }
         }
 
-        if (source == -1 || sink == -1)
+        // Connect all sinks to virtual sink
+        for (int i = 0; i < n; i++)
         {
-            Debug.LogError("Source or sink not found.");
-            return new Dictionary<(Vector3, Vector3), int>();
+            if (nodeWeights.TryGetValue(i, out int weight) && weight == -1)
+            {
+                residual[i, virtualSink] = int.MaxValue;
+            }
         }
 
-        int[] parent = new int[n];
-
-        while (BFS(residual, source, sink, parent))
+        int[] parent = new int[totalNodes];
+        while (BFS(residual, virtualSource, virtualSink, parent, totalNodes))
         {
             int pathFlow = int.MaxValue;
-            for (int v = sink; v != source; v = parent[v])
+            for (int v = virtualSink; v != virtualSource; v = parent[v])
             {
                 int u = parent[v];
                 pathFlow = Mathf.Min(pathFlow, residual[u, v]);
             }
 
-            // Apply flow and update residuals
-            for (int v = sink; v != source; v = parent[v])
+            for (int v = virtualSink; v != virtualSource; v = parent[v])
             {
                 int u = parent[v];
                 residual[u, v] -= pathFlow;
@@ -91,7 +99,7 @@ public class LineGraph
             }
         }
 
-        // Extract used edges with flow > 0
+        // Extract flow on original node-to-node edges
         var flowEdges = new Dictionary<(Vector3, Vector3), int>();
         for (int u = 0; u < n; u++)
         {
@@ -107,10 +115,9 @@ public class LineGraph
         return flowEdges;
     }
 
-    private bool BFS(int[,] residual, int source, int sink, int[] parent)
+    private bool BFS(int[,] residual, int source, int sink, int[] parent, int totalNodes)
     {
-        int n = nodes.Count;
-        bool[] visited = new bool[n];
+        bool[] visited = new bool[totalNodes];
         Queue<int> queue = new Queue<int>();
 
         queue.Enqueue(source);
@@ -120,14 +127,13 @@ public class LineGraph
         while (queue.Count > 0)
         {
             int u = queue.Dequeue();
-            for (int v = 0; v < n; v++)
+            for (int v = 0; v < totalNodes; v++)
             {
                 if (!visited[v] && residual[u, v] > 0)
                 {
                     queue.Enqueue(v);
                     parent[v] = u;
                     visited[v] = true;
-
                     if (v == sink)
                         return true;
                 }
@@ -136,8 +142,6 @@ public class LineGraph
 
         return false;
     }
-
-
 
     public int[,] GetMatrix() => adjacencyMatrix;
     public Dictionary<int, int> GetWeights() => nodeWeights;
