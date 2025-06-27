@@ -47,6 +47,98 @@ public class LineGraph
         return 0;
     }
 
+    public Dictionary<(Vector3 from, Vector3 to), int> GetFlowEdges()
+    {
+        int n = nodes.Count;
+        int[,] residual = (int[,])adjacencyMatrix.Clone();
+        int[,] flow = new int[n, n]; // flow[u, v]
+
+        // Find source and sink
+        int source = -1, sink = -1;
+        for (int i = 0; i < n; i++)
+        {
+            if (nodeWeights.TryGetValue(i, out int w))
+            {
+                if (w == 1) source = i;
+                else if (w == -1) sink = i;
+            }
+        }
+
+        if (source == -1 || sink == -1)
+        {
+            Debug.LogError("Source or sink not found.");
+            return new Dictionary<(Vector3, Vector3), int>();
+        }
+
+        int[] parent = new int[n];
+
+        while (BFS(residual, source, sink, parent))
+        {
+            int pathFlow = int.MaxValue;
+            for (int v = sink; v != source; v = parent[v])
+            {
+                int u = parent[v];
+                pathFlow = Mathf.Min(pathFlow, residual[u, v]);
+            }
+
+            // Apply flow and update residuals
+            for (int v = sink; v != source; v = parent[v])
+            {
+                int u = parent[v];
+                residual[u, v] -= pathFlow;
+                residual[v, u] += pathFlow;
+                flow[u, v] += pathFlow;
+            }
+        }
+
+        // Extract used edges with flow > 0
+        var flowEdges = new Dictionary<(Vector3, Vector3), int>();
+        for (int u = 0; u < n; u++)
+        {
+            for (int v = 0; v < n; v++)
+            {
+                if (flow[u, v] > 0)
+                {
+                    flowEdges[(nodes[u], nodes[v])] = flow[u, v];
+                }
+            }
+        }
+
+        return flowEdges;
+    }
+
+    private bool BFS(int[,] residual, int source, int sink, int[] parent)
+    {
+        int n = nodes.Count;
+        bool[] visited = new bool[n];
+        Queue<int> queue = new Queue<int>();
+
+        queue.Enqueue(source);
+        visited[source] = true;
+        parent[source] = -1;
+
+        while (queue.Count > 0)
+        {
+            int u = queue.Dequeue();
+            for (int v = 0; v < n; v++)
+            {
+                if (!visited[v] && residual[u, v] > 0)
+                {
+                    queue.Enqueue(v);
+                    parent[v] = u;
+                    visited[v] = true;
+
+                    if (v == sink)
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+
     public int[,] GetMatrix() => adjacencyMatrix;
     public Dictionary<int, int> GetWeights() => nodeWeights;
     public List<Vector3> GetNodePositions() => nodes;
